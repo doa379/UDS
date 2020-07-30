@@ -11,11 +11,8 @@
 #include <thread>
 #include <cstdint>
 #include <csignal>
-using namespace std;
-
 #define SOCKET_PATH "/tmp/"
-
-bool quit;
+static bool quit;
 
 class Uds
 {
@@ -23,23 +20,23 @@ class Uds
   int32_t fd, rc, cl;
   std::string socket_path, buf;
 
-public:
-  Uds(string);
+  public:
+  Uds(std::string);
   ~Uds(void);
-  bool writer(string);
+  bool writer(std::string);
   bool writer_connector(void);
   void reader(void);
 };
 
-Uds::Uds(string name)
+Uds::Uds(std::string name)
 {
   socket_path = SOCKET_PATH + name;
 
   if ((fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
-    {
-      perror("socket error");
-      exit(-1);
-    }
+  {
+    perror("socket error");
+    exit(-1);
+  }
 
   memset(&addr, 0, sizeof(addr));
   addr.sun_family = AF_UNIX;
@@ -59,19 +56,19 @@ bool Uds::writer_connector(void)
   return 1;
 }
 
-bool Uds::writer(string buf)
+bool Uds::writer(std::string buf)
 {
   if ((rc = write(fd, buf.c_str(), buf.size() * sizeof(char))) != buf.size())
-    {
-      if (rc > 0)
-	fprintf(stderr,"partial write");
+  {
+    if (rc > 0)
+      fprintf(stderr,"partial write");
 
-      else
-	{
-	  perror("write error");
-	  return 0;
-	}
+    else
+    {
+      perror("write error");
+      return 0;
     }
+  }
 
   return 1;
 }
@@ -81,43 +78,43 @@ void Uds::reader(void)
   unlink(socket_path.c_str());
 
   if (bind(fd, (struct sockaddr *) &addr, sizeof(addr)) == -1)
-    {
-      perror("bind error");
-      exit(-1);
-    }
+  {
+    perror("bind error");
+    exit(-1);
+  }
 
   if (listen(fd, 5) == -1)
+  {
+    perror("listen error");
+    exit(-1);
+  }
+
+  while (!quit)
+  {
+    if ((cl = accept(fd, NULL, NULL)) == -1)
     {
-      perror("listen error");
+      perror("accept error");
+      continue;
+    }
+
+    while ((rc = read(cl, &buf[0], sizeof(buf))) > 0 && !quit)
+    {
+      //buf[rc] = 0x00;
+      printf("read %u bytes: %*s\n", rc, rc, buf.c_str());
+    }
+
+    if (rc == -1)
+    {
+      perror("read");
       exit(-1);
     }
 
-  while (!quit)
+    else if (rc == 0)
     {
-      if ((cl = accept(fd, NULL, NULL)) == -1)
-	{
-	  perror("accept error");
-	  continue;
-	}
-      
-      while ((rc = read(cl, &buf[0], sizeof(buf))) > 0 && !quit)
-	{
-	  //buf[rc] = 0x00;
-	  printf("read %u bytes: %*s\n", rc, rc, buf.c_str());
-	}
-      
-      if (rc == -1)
-	{
-	  perror("read");
-	  exit(-1);
-	}
-      
-      else if (rc == 0)
-	{
-	  printf("EOF\n");
-	  close(cl);
-	}
+      printf("EOF\n");
+      close(cl);
     }
+  }
 
   close(cl);
   printf("Reader exit\n");
@@ -128,19 +125,19 @@ void writer_th(void)
   Uds w("name");
   // Send events
   srand(0);
-  
+
   while (!w.writer_connector())
     sleep(1);
-  
+
   while (!quit)
-    {
-      unsigned event = rand() % 100;
+  {
+    unsigned event = rand() % 100;
 
-      if (w.writer(to_string(event)))
-	printf("Wrote %u\n", event);
+    if (w.writer(std::to_string(event)))
+      printf("Wrote %u\n", event);
 
-      sleep(5);
-    }
+    sleep(5);
+  }
 
   w.writer("0x00");
   printf("Writer exit\n");
@@ -161,8 +158,8 @@ void signal_handler(int signum)
 int main()
 {
   signal(SIGINT, signal_handler);
-  thread writer(writer_th);
-  thread reader(reader_th);
+  std::thread writer(writer_th);
+  std::thread reader(reader_th);
   writer.join();
   reader.join();
   return 0;
