@@ -13,6 +13,7 @@
 #include <stdbool.h>
 #define SOCKET_PATH "/tmp"
 #define PATH_LEN 128
+
 static bool quit;
 
 typedef struct
@@ -56,7 +57,7 @@ bool connector(uds_t *uds)
 
 bool sender(uds_t *uds, void **data)
 {
-  if ((uds->rc = write(uds->fd, data, 8)) != 8)
+  if ((uds->rc = write(uds->fd, data, sizeof(int64_t))) != sizeof(int64_t))
   {
     if (uds->rc > 0)
       fprintf(stderr,"partial write");
@@ -96,11 +97,12 @@ void *receiver(void *userp)
       continue;
     }
   
-    while ((uds->rc = read(uds->cl, &data, 8)) > 0)
+    while ((uds->rc = read(uds->cl, &data, sizeof(data))) > 0)
     {
       printf("read %u bytes: %s\n", uds->rc, (char *) data);
       sleep(2);
       printf("read finished on %s\n", (char *) data);
+      // Want to return signal back as (void *) data
       free((void *) data);
     }
 
