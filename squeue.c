@@ -1,6 +1,10 @@
-#include <string.h>
+#include <stdlib.h>
+#include "squeue.h"
 
 // Writer
+bool enqueue(squeue_t *squeue)
+{
+/*
 bool enqueue(bltpool_t *bltpool, void (*func)(arg_t []), unsigned n, ...)
 {
   bltpool_job_t job = { .func = func, .nargs = n };
@@ -52,15 +56,15 @@ bool enqueue(bltpool_t *bltpool, void (*func)(arg_t []), unsigned n, ...)
     pthread_mutex_unlock(&bltpool->mutex);
     return 0;
   }
-
+*/
   return 1;
 }
 
 // Reader
 static void *worker_th(void *userp)
 {
-  bltpool_t *bltpool = userp;
-
+  //squeue_t *squeue = userp;
+/*
   while (1)
   {
     pthread_mutex_lock(&bltpool->mutex);
@@ -73,10 +77,6 @@ static void *worker_th(void *userp)
       pthread_mutex_unlock(&bltpool->mutex);
       return NULL;
     }
-    /* Need to make a copy of head job because the location 
-     * of the list will change as the list is realloc'd when
-     * new elements are added to it.
-     */
     bltpool_job_t *job = bl_head(bltpool->Q), 
                   localjob = { .func = job->func };
 
@@ -89,7 +89,7 @@ static void *worker_th(void *userp)
     queue_pop(bltpool);
     pthread_mutex_unlock(&bltpool->mutex);
   }
-
+*/
   return NULL;
 }
 
