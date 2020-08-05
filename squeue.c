@@ -45,37 +45,40 @@ bool enqueue(squeue_t *squeue, void *arg, size_t size)
 static void *worker_th(void *userp)
 {
   squeue_t *squeue = userp;
-  uds_t *uds = squeue->cons;
+  uds_t *cons = squeue->cons;
   
-  if (bind(uds->fd, (struct sockaddr *) &uds->addr, sizeof(uds->addr)) == -1)
+  if (bind(cons->fd, (struct sockaddr *) &cons->addr, sizeof(cons->addr)) == -1)
   // "bind error"
     return NULL;
 
-  else if (listen(uds->fd, 5) == -1)
+  else if (listen(cons->fd, 5) == -1)
   // "listen error");
+    return NULL;
+  
+  else if (!connector(squeue->prod))
     return NULL;
 
   int64_t data;
 
   while (!squeue->quit)
   {
-    if ((uds->cl = accept(uds->fd, NULL, NULL)) == -1)
+    if ((cons->cl = accept(cons->fd, NULL, NULL)) == -1)
     // "accept error"
       continue;
   
-    while ((uds->rc = read(uds->cl, &data, sizeof(data))) > 0)
+    while ((cons->rc = read(cons->cl, &data, sizeof(data))) > 0)
     {
-      //printf("read %u bytes: %s\n", uds->rc, (char *) data);
-      //sleep(2);
-      //printf("read finished on %s\n", (char *) data);
+      printf("read %u bytes: %d\n", cons->rc, *(int *) data);
+      sleep(2);
+      printf("read finished on %d\n", *(int *) data);
       free((void *) data);
     }
 
-    if (uds->rc == -1)
+    if (cons->rc == -1)
     // read error
       break;
 
-    else if (uds->rc == 0)
+    else if (cons->rc == 0)
     // EOF
       break;
   }
@@ -109,6 +112,7 @@ static uds_t *init_uds(void)
 
 void squeue_del(squeue_t *squeue)
 {
+  squeue->quit = 1;
   close(squeue->cons->cl);
   pthread_join(squeue->pth, NULL);
   free(squeue->last_data);
@@ -133,14 +137,6 @@ squeue_t *squeue_new(void)
 
   else if (!(squeue->prod = init_uds()))
   {
-    deinit_uds(squeue->cons);
-    free(squeue);
-    return NULL;
-  }
-
-  else if (!connector(squeue->prod))
-  {
-    deinit_uds(squeue->prod);
     deinit_uds(squeue->cons);
     free(squeue);
     return NULL;
