@@ -95,6 +95,7 @@ static uds_t *init_uds(void)
 {
   uds_t *uds = calloc(1, sizeof *uds);
   sprintf(uds->socket_path, "%s/%s", SOCKET_PATH, "twoway_socket");
+  unlink(uds->socket_path);
 
   if ((uds->fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
   {
@@ -106,7 +107,6 @@ static uds_t *init_uds(void)
   memset(&uds->addr, 0, sizeof(uds->addr));
   uds->addr.sun_family = AF_UNIX;
   strncpy(uds->addr.sun_path, uds->socket_path, sizeof(uds->addr.sun_path) - 1);
-  unlink(uds->socket_path);
   return uds;
 }
 
@@ -114,6 +114,7 @@ void squeue_del(squeue_t *squeue)
 {
   squeue->quit = 1;
   close(squeue->cons->cl);
+  enqueue(squeue, NULL, 0);
   pthread_join(squeue->pth, NULL);
   free(squeue->last_data);
   deinit_uds(squeue->prod);
@@ -143,5 +144,6 @@ squeue_t *squeue_new(void)
   }
 
   pthread_create(&squeue->pth, NULL, worker_th, (void *) squeue);
+  while (!enqueue(squeue, NULL, 0));
   return squeue;
 }

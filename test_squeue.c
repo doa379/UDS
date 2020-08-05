@@ -14,9 +14,13 @@ int main()
     if (enqueue(squeue, &event, sizeof(int)))
       printf("Sent event %d\n", event);
 
+    else
+      printf("enqueue error\n");
+
     sleep(1);
   }
 
+  sleep(10);
   squeue_del(squeue);
   return 0;
 }
