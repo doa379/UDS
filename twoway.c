@@ -102,7 +102,6 @@ void *receiver(void *userp)
       printf("read %u bytes: %s\n", uds->rc, (char *) data);
       sleep(2);
       printf("read finished on %s\n", (char *) data);
-      // Want to return signal back as (void *) data
       free((void *) data);
     }
 
@@ -119,8 +118,6 @@ void *receiver(void *userp)
     }
   }
 
-  //if ((void *) data)
-  //free((void *) data);
   printf("Consumer/Reader exit\n");
   return NULL;
 }
@@ -142,12 +139,14 @@ int main()
     sleep(1);
 
   srand(0);
+  void *last_data;
   
   while (!quit)
   {
     unsigned event = rand() % 100;
     void *data = malloc(sizeof(2 * sizeof(char)));
     sprintf((char *) data, "%d", event);
+    last_data = data;
 
     if (sender(prod, &data))
       printf("Wrote event %d\n", event);
@@ -157,6 +156,7 @@ int main()
   printf("Producer/Writer exit\n");
   close(cons->cl);
   pthread_join(reader_th, NULL);
+  free(last_data);
   deinit_uds(prod);
   deinit_uds(cons);
   return 0;
