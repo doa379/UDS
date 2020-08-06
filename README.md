@@ -1,3 +1,3 @@
-# UDS
+# Sockets
 
-UNIX Domain Sockets for IPC
+Socket implementation for IPC
