@@ -27,6 +27,7 @@ typedef struct
 
 
 bool enqueue(squeue_t *, void *, size_t);
+size_t count(squeue_t *);
 void squeue_del(squeue_t *);
 squeue_t *squeue_new(void);
 

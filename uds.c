@@ -1,5 +1,5 @@
 // UNIX Domain Sockets
-// $ gcc twoway.cpp -o twoway -l pthread && ./twoway
+// $ gcc uds.c -o uds -l pthread && ./uds
 
 #include <sys/socket.h>
 #include <sys/un.h>

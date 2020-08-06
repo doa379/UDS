@@ -1,7 +1,10 @@
+//#define _GNU_SOURCE
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+//#include <fcntl.h>
+#include <sys/ioctl.h>
 #include "squeue.h"
 
 static bool connector(uds_t *uds)
@@ -86,8 +89,18 @@ static void *worker_th(void *userp)
   return NULL;
 }
 
+size_t count(squeue_t *squeue)
+{
+  size_t sz;
+  
+  //while (!sz && ioctl(squeue->prod->fd, FIONREAD, &sz) != -1);
+  ioctl(squeue->cons->fd, FIONREAD, &sz);
+  return sz;
+}
+
 static void deinit_uds(uds_t *uds)
 {
+  // Remove file uds->socket_path if it exists
   free(uds);
 }
 
@@ -112,6 +125,7 @@ static uds_t *init_uds(void)
 
 void squeue_del(squeue_t *squeue)
 {
+  // Wait here until the socket is empty
   squeue->quit = 1;
   close(squeue->cons->cl);
   enqueue(squeue, NULL, 0);
@@ -144,6 +158,7 @@ squeue_t *squeue_new(void)
   }
 
   pthread_create(&squeue->pth, NULL, worker_th, (void *) squeue);
-  while (!enqueue(squeue, NULL, 0));
+  //while (!enqueue(squeue, NULL, 0));
+  sleep(2);
   return squeue;
 }
