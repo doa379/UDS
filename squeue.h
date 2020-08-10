@@ -22,12 +22,11 @@ typedef struct
   bool quit;
   uds_t *prod, *cons;
   pthread_t pth;
-  void *last_data;
 } squeue_t;
 
 
 bool enqueue(squeue_t *, void *, size_t);
-size_t count(squeue_t *);
+int count(uds_t *);
 void squeue_del(squeue_t *);
 squeue_t *squeue_new(void);
 

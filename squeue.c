@@ -4,7 +4,7 @@
 #include <string.h>
 #include <unistd.h>
 //#include <fcntl.h>
-#include <sys/ioctl.h>
+//#include <sys/ioctl.h>
 #include "squeue.h"
 
 static bool connector(uds_t *uds)
@@ -36,7 +36,6 @@ bool enqueue(squeue_t *squeue, void *arg, size_t size)
 {
   void *data = calloc(1, size);
   memcpy(data, arg, size);
-  squeue->last_data = data;
 
   if (sender(squeue->prod, &data))
     return 1;
@@ -63,7 +62,7 @@ static void *worker_th(void *userp)
 
   int64_t data;
 
-  while (!squeue->quit)
+  while (1)
   {
     if ((cons->cl = accept(cons->fd, NULL, NULL)) == -1)
     // "accept error"
@@ -72,8 +71,15 @@ static void *worker_th(void *userp)
     while ((cons->rc = read(cons->cl, &data, sizeof(data))) > 0)
     {
       printf("read %u bytes: %d\n", cons->rc, *(int *) data);
-      sleep(2);
+      sleep(3);
       printf("read finished on %d\n", *(int *) data);
+
+      if (*(int *) data == 0 && squeue->quit)
+      {
+        free((void *) data);
+        return NULL;
+      }
+
       free((void *) data);
     }
 
@@ -88,19 +94,21 @@ static void *worker_th(void *userp)
 
   return NULL;
 }
-
-size_t count(squeue_t *squeue)
+/*
+int count(uds_t *uds)
 {
-  size_t sz;
+  int size = 0;
   
-  //while (!sz && ioctl(squeue->prod->fd, FIONREAD, &sz) != -1);
-  ioctl(squeue->cons->fd, FIONREAD, &sz);
-  return sz;
+  //while (!size && ioctl(uds->fd, FIONREAD, &size) > -1)
+    //sleep(1);
+  ioctl(uds->fd, FIONREAD, &size);
+  return size;
 }
-
+*/
 static void deinit_uds(uds_t *uds)
 {
   // Remove file uds->socket_path if it exists
+  close(uds->cl);
   free(uds);
 }
 
@@ -125,12 +133,10 @@ static uds_t *init_uds(void)
 
 void squeue_del(squeue_t *squeue)
 {
-  // Wait here until the socket is empty
   squeue->quit = 1;
-  close(squeue->cons->cl);
+  // Dummy signal
   enqueue(squeue, NULL, 0);
   pthread_join(squeue->pth, NULL);
-  free(squeue->last_data);
   deinit_uds(squeue->prod);
   deinit_uds(squeue->cons);
   free(squeue);
@@ -158,7 +164,6 @@ squeue_t *squeue_new(void)
   }
 
   pthread_create(&squeue->pth, NULL, worker_th, (void *) squeue);
-  //while (!enqueue(squeue, NULL, 0));
-  sleep(2);
+  while (!enqueue(squeue, NULL, 0));
   return squeue;
 }

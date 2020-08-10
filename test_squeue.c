@@ -11,18 +11,18 @@ int main()
   {
     unsigned event = rand() % 100;
 
-    //if (enqueue(squeue, &event, sizeof(int)))
+    if (enqueue(squeue, &event, sizeof(int)))
       printf("Sent event %d\n", event);
 
-    //else
+    else
       printf("enqueue error\n");
 
-    printf("Jobs %ld\n", count(squeue));
+    //printf("Jobs %d %d\n", count(squeue->prod), count(squeue->cons));
     sleep(1);
   }
 
-  sleep(10);
-  printf("Jobs %ld\n", count(squeue));
+  sleep(2);
+  //printf("Jobs %d %d\n", count(squeue->prod), count(squeue->cons));
   squeue_del(squeue);
   return 0;
 }
