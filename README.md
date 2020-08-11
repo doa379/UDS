@@ -1,3 +1,3 @@
-# Sockets
+# IPC
 
-Socket implementation for IPC
+Implementation for IPC
