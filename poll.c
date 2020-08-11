@@ -22,10 +22,10 @@ void child_process(void)
   addr.sin_family = AF_INET;
   addr.sin_port = htons(2000);
   addr.sin_addr.s_addr = inet_addr("127.0.0.1");
-  connect(sockfd, (struct sockaddr*) &addr, sizeof(addr));
+  connect(sockfd, (struct sockaddr *) &addr, sizeof(addr));
   printf("child {%d} connected \n", getpid());
   
-  while(1)
+  while (1)
   {
     int sl = (random() % 10 ) +  1;
     num++;

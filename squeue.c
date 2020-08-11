@@ -157,6 +157,7 @@ squeue_t *squeue_new(void)
   }
 
   sprintf(squeue->socket_name, "%s/sock-%p", SOCKET_PATH, squeue);
+  unlink(squeue->socket_name);
 
   if (!(squeue->cons = init_uds(squeue->socket_name)))
   {
