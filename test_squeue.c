@@ -3,6 +3,11 @@
 #include <unistd.h>
 #include "squeue.h"
 
+void f(void *arg)
+{
+  printf("Received event %d\n", *(int *) arg);
+}
+
 int main()
 {
   squeue_t *squeue = squeue_new();
@@ -11,7 +16,7 @@ int main()
   {
     unsigned event = rand() % 100;
 
-    if (enqueue(squeue, &event, sizeof(int)))
+    if (enqueue(squeue, f, &event, sizeof(int)))
       printf("Sent event %d\n", event);
 
     else

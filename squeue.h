@@ -12,6 +12,13 @@
 
 typedef struct
 {
+  void (*fn)(void *);
+  void *arg;
+  size_t size;
+} job_t;
+
+typedef struct
+{
   struct sockaddr_un addr;
   int32_t fd, rc, cl;
   char socket_path[PATH_LEN];
@@ -25,8 +32,7 @@ typedef struct
 } squeue_t;
 
 
-bool enqueue(squeue_t *, void *, size_t);
-int count(uds_t *);
+bool enqueue(squeue_t *, void (*)(void *), void *, size_t);
 void squeue_del(squeue_t *);
 squeue_t *squeue_new(void);
 

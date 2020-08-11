@@ -1,10 +1,7 @@
-//#define _GNU_SOURCE
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
-//#include <fcntl.h>
-//#include <sys/ioctl.h>
 #include "squeue.h"
 
 static bool connector(uds_t *uds)
@@ -15,9 +12,9 @@ static bool connector(uds_t *uds)
   return 1;
 }
 
-static bool sender(uds_t *uds, void **data)
+static bool sender(uds_t *uds, job_t *job)
 {
-  if ((uds->rc = write(uds->fd, data, sizeof(int64_t))) != sizeof(int64_t))
+  if ((uds->rc = write(uds->fd, job, sizeof *job)) != sizeof *job)
   {
     if (uds->rc > 0)
     // partial write
@@ -32,14 +29,24 @@ static bool sender(uds_t *uds, void **data)
 }
 
 // Writer
-bool enqueue(squeue_t *squeue, void *arg, size_t size)
+bool enqueue(squeue_t *squeue, void (*fn)(void *), void *arg, size_t size)
 {
-  void *data = calloc(1, size);
-  memcpy(data, arg, size);
+  void *data = arg;
 
-  if (sender(squeue->prod, &data))
+  if (size)
+  {
+    data = calloc(1, size);
+    memcpy(data, arg, size);
+  }
+
+  job_t job = { .fn = fn, .arg = data, .size = size };
+
+  if (sender(squeue->prod, &job))
     return 1;
-  
+ 
+  if (size)
+    free(data);
+
   return 0;
 }
 
@@ -60,7 +67,7 @@ static void *worker_th(void *userp)
   else if (!connector(squeue->prod))
     return NULL;
 
-  int64_t data;
+  job_t job;
 
   while (1)
   {
@@ -68,19 +75,21 @@ static void *worker_th(void *userp)
     // "accept error"
       continue;
   
-    while ((cons->rc = read(cons->cl, &data, sizeof(data))) > 0)
+    while ((cons->rc = read(cons->cl, &job, sizeof job)) > 0)
     {
-      printf("read %u bytes: %d\n", cons->rc, *(int *) data);
-      sleep(3);
-      printf("read finished on %d\n", *(int *) data);
-
-      if (*(int *) data == 0 && squeue->quit)
+      if (job.fn == NULL && squeue->quit)
       {
-        free((void *) data);
+        if (job.size)
+          free(job.arg);
+
         return NULL;
       }
 
-      free((void *) data);
+      else if (job.fn != NULL)
+        (job.fn)(job.arg);
+
+      if (job.size)
+        free(job.arg);
     }
 
     if (cons->rc == -1)
@@ -94,17 +103,7 @@ static void *worker_th(void *userp)
 
   return NULL;
 }
-/*
-int count(uds_t *uds)
-{
-  int size = 0;
-  
-  //while (!size && ioctl(uds->fd, FIONREAD, &size) > -1)
-    //sleep(1);
-  ioctl(uds->fd, FIONREAD, &size);
-  return size;
-}
-*/
+
 static void deinit_uds(uds_t *uds)
 {
   // Remove file uds->socket_path if it exists
@@ -135,7 +134,7 @@ void squeue_del(squeue_t *squeue)
 {
   squeue->quit = 1;
   // Dummy signal
-  enqueue(squeue, NULL, 0);
+  enqueue(squeue, NULL, NULL, 0);
   pthread_join(squeue->pth, NULL);
   deinit_uds(squeue->prod);
   deinit_uds(squeue->cons);
@@ -164,6 +163,6 @@ squeue_t *squeue_new(void)
   }
 
   pthread_create(&squeue->pth, NULL, worker_th, (void *) squeue);
-  while (!enqueue(squeue, NULL, 0));
+  while (!enqueue(squeue, NULL, NULL, 0));
   return squeue;
 }
