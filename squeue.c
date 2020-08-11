@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/stat.h>
+#include <errno.h>
 #include "squeue.h"
 
 static bool connector(uds_t *uds)
@@ -106,27 +108,24 @@ static void *worker_th(void *userp)
 
 static void deinit_uds(uds_t *uds)
 {
-  // Remove file uds->socket_path if it exists
   close(uds->cl);
   free(uds);
 }
 
-static uds_t *init_uds(void)
+static uds_t *init_uds(const char *sock_name)
 {
   uds_t *uds = calloc(1, sizeof *uds);
-  sprintf(uds->socket_path, "%s/%s", SOCKET_PATH, "twoway_socket");
-  unlink(uds->socket_path);
 
   if ((uds->fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
   {
   // socket error
-    deinit_uds(uds);
+    free(uds);
     return NULL;
   }
 
   memset(&uds->addr, 0, sizeof(uds->addr));
   uds->addr.sun_family = AF_UNIX;
-  strncpy(uds->addr.sun_path, uds->socket_path, sizeof(uds->addr.sun_path) - 1);
+  strncpy(uds->addr.sun_path, sock_name, sizeof(uds->addr.sun_path) - 1);
   return uds;
 }
 
@@ -138,6 +137,7 @@ void squeue_del(squeue_t *squeue)
   pthread_join(squeue->pth, NULL);
   deinit_uds(squeue->prod);
   deinit_uds(squeue->cons);
+  unlink(squeue->socket_name);
   free(squeue);
   squeue = NULL;
 }
@@ -148,14 +148,23 @@ squeue_t *squeue_new(void)
 
   if (squeue == NULL)
     return NULL;
-
-  else if (!(squeue->cons = init_uds()))
+  
+  else if (mkdir(SOCKET_PATH, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) == -1 
+    && errno != EEXIST)
   {
     free(squeue);
     return NULL;
   }
 
-  else if (!(squeue->prod = init_uds()))
+  sprintf(squeue->socket_name, "%s/sock-%p", SOCKET_PATH, squeue);
+
+  if (!(squeue->cons = init_uds(squeue->socket_name)))
+  {
+    free(squeue);
+    return NULL;
+  }
+
+  else if (!(squeue->prod = init_uds(squeue->socket_name)))
   {
     deinit_uds(squeue->cons);
     free(squeue);

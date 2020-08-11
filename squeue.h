@@ -7,7 +7,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#define SOCKET_PATH "/tmp"
+#define SOCKET_PATH "/tmp/squeue_sockets"
 #define PATH_LEN 128
 
 typedef struct
@@ -21,12 +21,12 @@ typedef struct
 {
   struct sockaddr_un addr;
   int32_t fd, rc, cl;
-  char socket_path[PATH_LEN];
 } uds_t;
 
 typedef struct
 {
   bool quit;
+  char socket_name[PATH_LEN];
   uds_t *prod, *cons;
   pthread_t pth;
 } squeue_t;
