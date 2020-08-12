@@ -1,5 +1,4 @@
 #include <sys/types.h>
-#include <sys/wait.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -8,7 +7,6 @@
 int main(int argc, char *argv[])
 {
   int pipefd[2]; /* { R, W } */
-  pid_t cpid;
   char buf[11];
 
   if (pipe(pipefd) == -1)
@@ -17,7 +15,7 @@ int main(int argc, char *argv[])
     exit(EXIT_FAILURE);
   }
 
-  cpid = fork();
+  pid_t cpid = fork();
   if (cpid == -1)
   {
     perror("fork");
