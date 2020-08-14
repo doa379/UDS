@@ -11,7 +11,7 @@ void f(void *arg)
 
 int main(int argc, char *argv[])
 {
-  pqueue_t *pqueue = pqueue_new(); 
+  pqueue_t *pqueue = pqueue_new();
   for (unsigned i = 0; i < 4; i++)
   {
     char prod[100];
