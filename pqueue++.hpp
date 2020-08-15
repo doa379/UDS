@@ -7,7 +7,7 @@
 class Pqueue
 {
   std::thread *th;
-  int32_t pipefd[2]; /* { R, W } */
+  int32_t pipefd[2] { 0, 0 }; /* { R, W } */
   void reader(void);
 
 public:
