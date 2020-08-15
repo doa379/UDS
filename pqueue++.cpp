@@ -1,7 +1,7 @@
 /* Pipe Queue using pthreads */
 
 #include <unistd.h>
-#include "pqueue.hpp"
+#include "pqueue++.hpp"
 
 Pqueue::Pqueue(void)
 {

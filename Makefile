@@ -16,15 +16,15 @@ OBJ_LIBPQUEUE = ${SRC_LIBPQUEUE:.c=.o}
 SRC_TESTPQUEUE = test_pqueue.c
 OBJ_TESTPQUEUE = ${SRC_TESTPQUEUE:.c=.o}
 
-SRC_LIBPQUEUE++ = pqueue.cpp
+SRC_LIBPQUEUE++ = pqueue++.cpp
 OBJ_LIBPQUEUE++ = ${SRC_LIBPQUEUE++:.cpp=.o}
-SRC_TESTPQUEUE++ = test_pqueue.cpp
+SRC_TESTPQUEUE++ = test_pqueue++.cpp
 OBJ_TESTPQUEUE++ = ${SRC_TESTPQUEUE++:.cpp=.o}
 
 CC = gcc
 CFLAGS = -std=c99 -c -g -Wall -Werror -pie -fPIC ${INCS}
 CPPC = g++
-CPPFLAGS = -std=c99 -c -g -Wall -Werror -pie -fPIC ${INCS}
+CPPFLAGS = -std=c++11 -c -g -Wall -Werror -pie -fPIC ${INCS}
 
 all: libsqueue.so test_squeue libshm.so test_shm libpqueue.so test_pqueue libpqueue++.so test_pqueue++
 
@@ -62,7 +62,7 @@ test_pqueue: ${OBJ_TESTPQUEUE}
 
 libpqueue++.so: ${OBJ_LIBPQUEUE++}
 		@echo CPPC -o $@
-		@${CPPC} -shared -o $@ ${OBJ_LIBPQUEUE++} -L $(CURDIR) -l pthread -Wl,-rpath,$(CURDIR)
+		@${CPPC} -shared -o $@ ${OBJ_LIBPQUEUE++} -l pthread
 
 test_pqueue++: ${OBJ_TESTPQUEUE++}
 		@echo CPPC -o $@
@@ -72,4 +72,3 @@ clean:
 		@echo Cleaning
 		@rm -f ${OBJ_LIBSQUEUE} ${OBJ_TESTSQUEUE} ${OBJ_LIBSHM} ${OBJ_TESTSHM} ${OBJ_LIBPQUEUE} ${OBJ_TESTPQUEUE} ${OBJ_LIBPQUEUE++} ${OBJ_TESTPQUEUE++}
 		@rm -f test_squeue test_shm test_pqueue test_pqueue++
-

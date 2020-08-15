@@ -1,5 +1,5 @@
 #include <iostream>
-#include "pqueue.hpp"
+#include "pqueue++.hpp"
 
 void f(int arg)
 {
