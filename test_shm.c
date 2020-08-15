@@ -6,7 +6,7 @@
 int main()
 {
   int var = 1;
-  shm_t *shm = shm_new(&var, sizeof var);
+  shm_t *shm = shm_new(sizeof var);
 
   int pid;
   if ((pid = fork()) == 0)

@@ -10,7 +10,7 @@ typedef struct
 } shm_t;
 
 
-shm_t *shm_new(void *, size_t);
+shm_t *shm_new(size_t);
 void shm_write(shm_t *, void *);
 void shm_read(void *, shm_t *);
 void shm_del(shm_t *);

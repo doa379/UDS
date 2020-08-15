@@ -4,12 +4,12 @@
 #include <sys/stat.h>
 #include <stdlib.h>
 #include <string.h>
-#include "shm.h"
 #include <stdio.h>
+#include "shm.h"
 
-shm_t *shm_new(void *data, size_t size)
+shm_t *shm_new(size_t size)
 {
-  shm_t *shm = calloc(1, sizeof *shm);
+  shm_t *shm = malloc(sizeof *shm);
   shm->size = size;
 
   if ((shm->id = shmget(IPC_PRIVATE, size, IPC_CREAT | IPC_EXCL | S_IRUSR | S_IWUSR)) < 0)

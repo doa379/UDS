@@ -43,11 +43,11 @@ test_shm: ${OBJ_TESTSHM}
 
 libpqueue.so: ${OBJ_LIBPQUEUE}
 		@echo CC -o $@
-		@${CC} -shared -o $@ ${OBJ_LIBPQUEUE}
+		@${CC} -shared -o $@ ${OBJ_LIBPQUEUE} -L $(CURDIR) -l shm -Wl,-rpath,$(CURDIR)
 
 test_pqueue: ${OBJ_TESTPQUEUE}
 		@echo CC -o $@
-		@${CC} -o $@ ${OBJ_TESTPQUEUE} -L $(CURDIR) -l pqueue -Wl,-rpath,$(CURDIR)
+		@${CC} -o $@ ${OBJ_TESTPQUEUE} -L $(CURDIR) -l pqueue -l shm -Wl,-rpath,$(CURDIR)
 
 clean:
 		@echo Cleaning
