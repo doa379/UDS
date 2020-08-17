@@ -18,19 +18,19 @@ Pqueue::~Pqueue(void)
 
 void Pqueue::reader(void)
 {
-  //close(pipefd[1]);
-  std::function<void()> job;
+  void *job = NULL;
 
-  while (read(pipefd[0], &job, sizeof job) > 0)
+  while (read(pipefd[0], &job, sizeof(int64_t)) > 0)
   {
-    job();
+    std::function<void()> *f = static_cast<std::function<void()> *>(job);
+    (*f)();
+    delete f;
   }
 }
 
-bool Pqueue::enqueue(std::function<void()> job)
+bool Pqueue::enqueue(void *job)
 {
-  //close(pipefd[0]);
-  if (write(pipefd[1], &job, sizeof job) == sizeof job)
+  if (write(pipefd[1], job, sizeof(int64_t)) == sizeof(int64_t))
     return 1;
 
   return 0;
