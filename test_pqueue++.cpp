@@ -15,8 +15,7 @@ int main()
   int *p = new int(5);
   for (unsigned i = 100; i < 105; i++)
   {
-    std::function<void()> *f = new std::function<void()>([=] { g(i, p); });
-    if (pqueue.enqueue(&f))
+    if (pqueue.enqueue([=] { g(i, p); }))
       std::cout << "wrote f(" << i << ", " << *p << ")\n";
   }
 

@@ -13,5 +13,5 @@ class Pqueue
 public:
   Pqueue(void);
   ~Pqueue(void);
-  bool enqueue(void *);
+  bool enqueue(std::function<void()>);
 };
