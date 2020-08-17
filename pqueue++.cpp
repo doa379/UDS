@@ -11,7 +11,7 @@ Pqueue::Pqueue(void)
 
 Pqueue::~Pqueue(void)
 {
-  close(pipefd[1]);
+  enqueue([this] { close(pipefd[1]);}); // Queue EOF
   th->join();
   delete th;
 }
