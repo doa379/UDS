@@ -11,7 +11,7 @@ Pqueue::Pqueue(void)
 
 Pqueue::~Pqueue(void)
 {
-  enqueue([this] { close(pipefd[1]);}); // Queue EOF
+  enqueue([this] { close(pipefd[1]); }); // Queue EOF
   th->join();
   delete th;
 }
@@ -34,5 +34,6 @@ bool Pqueue::enqueue(std::function<void()> job)
   if (write(pipefd[1], &f, sizeof f) == sizeof f)
     return 1;
 
+  delete f;
   return 0;
 }
