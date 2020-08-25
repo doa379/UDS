@@ -21,7 +21,7 @@ void Pqueue::reader(void)
   void *f;
   std::function<void()> *job;
 
-  while (read(pipefd[0], &f, sizeof(int64_t)) > 0)
+  while (read(pipefd[0], &f, sizeof job) > 0)
     if ((job = static_cast<std::function<void()> *>(f)))
     {
       (*job)();
