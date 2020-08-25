@@ -11,21 +11,22 @@ Pqueue::Pqueue(void)
 
 Pqueue::~Pqueue(void)
 {
-  enqueue([this] { close(pipefd[1]); }); // Queue EOF
+  while (!enqueue([this] { close(pipefd[1]); })); // Queue EOF
   th->join();
   delete th;
 }
 
 void Pqueue::reader(void)
 {
-  std::function<void()> *f;
+  void *f;
+  std::function<void()> *job;
 
-  while (read(pipefd[0], &f, sizeof f) > 0)
-  {
-    std::function<void()> *job = static_cast<std::function<void()> *>(f);
-    (*job)();
-    delete job;
-  }
+  while (read(pipefd[0], &f, sizeof(int64_t)) > 0)
+    if ((job = static_cast<std::function<void()> *>(f)))
+    {
+      (*job)();
+      delete job;
+    }
 }
 
 bool Pqueue::enqueue(std::function<void()> job)
